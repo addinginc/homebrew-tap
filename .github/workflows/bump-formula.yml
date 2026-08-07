@@ -1,0 +1,68 @@
+name: Bump formula from distribution bucket
+
+# cotomu CLI の公開配布バケット (gs://cotomu-cli-dist、HTTPS で誰でも読める) の
+# latest.txt を監視し、formula が古ければ checksums.txt から再生成して commit する。
+#
+# cotomu 本体リポジトリ側に cross-repo token を置かないための設計:
+#   - この workflow は自リポジトリの GITHUB_TOKEN だけで完結する (長命 PAT 不要)
+#   - リリース直後に即時反映したい場合は cotomu リポジトリ側から
+#     `gh workflow run bump-formula.yml -R addinginc/homebrew-tap` を叩く
+#     (cron はバックアップ。リポジトリが 60 日更新なしだと cron が自動停止する点に注意)
+
+on:
+  schedule:
+    - cron: "17 * * * *" # 毎時 (新リリースの取りこぼし防止)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bump-formula
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render formula if a new release exists
+        id: render
+        run: |
+          set -eu
+          base="https://storage.googleapis.com/cotomu-cli-dist/cli"
+
+          tag="$(curl -fsSL "${base}/latest.txt" | tr -d '[:space:]')"
+          case "$tag" in
+            cli-v*) ;;
+            *)
+              echo "::error::unexpected latest.txt content: ${tag}"
+              exit 1
+              ;;
+          esac
+
+          current="$(grep -oE 'version "[0-9][0-9.]*"' Formula/cotomu.rb | grep -oE '[0-9][0-9.]*' || true)"
+          if [ "cli-v${current}" = "$tag" ]; then
+            echo "formula is up-to-date (${tag})"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "updating formula: cli-v${current:-<none>} -> ${tag}"
+          curl -fsSL "${base}/${tag}/checksums.txt" -o /tmp/checksums.txt
+          ./scripts/render-formula.sh "$tag" /tmp/checksums.txt > Formula/cotomu.rb
+          ruby -c Formula/cotomu.rb
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.render.outputs.changed == 'true'
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/cotomu.rb
+          git commit -m "cotomu ${{ steps.render.outputs.tag }}"
+          git push

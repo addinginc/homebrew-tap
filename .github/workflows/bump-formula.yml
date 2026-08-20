@@ -3,19 +3,29 @@ name: Bump formula from distribution bucket
 # cotomu CLI の公開配布バケット (gs://cotomu-cli-dist、HTTPS で誰でも読める) の
 # latest.txt を確認し、formula が古ければ checksums.txt から再生成して commit する。
 #
-# 起動経路は workflow_dispatch のみ (毎時 cron は 2026-08-20 に全廃):
-#   - cotomu CLI のリリース後に、手元から手動で dispatch する運用:
-#       gh workflow run bump-formula.yml -R addinginc/homebrew-tap
-#     (cotomu 本体のリリース workflow からの自動 dispatch は、cross-repo token を
-#      本体リポジトリに置かない方針のため行わない)
-#   - ⚠️ 叩き忘れると CI は何も失敗せず formula だけが古いまま残る。
-#     手順は cotomu の docs/operations/cli-release.md「4. Homebrew formula の反映」に必須ステップとして記載。
-#   - 冪等: formula が既に最新なら commit step は skip される。遅れて叩いても
-#     latest.txt を見て再生成するので正しい最新版に復旧する。
-#   - formula の生成・commit 自体は自リポジトリの GITHUB_TOKEN だけで完結する
-#     (cross-repo の長命 PAT はどちらのリポジトリにも置かない)
+# 起動経路は 2 つ (cotomu 本体のリリース workflow からの自動 dispatch は、cross-repo token を
+# 本体リポジトリに置かない方針のため行わない):
+#   1. workflow_dispatch — リリース直後に即時反映したいとき手元から叩く (推奨):
+#        gh workflow run bump-formula.yml -R addinginc/homebrew-tap
+#   2. 日次 cron — 1. を叩き忘れたときの安全網。最大 24 時間以内に自動追従する。
+#      毎時 cron から日次へ変更した (2026-08-20): このリポジトリは public なので
+#      Actions の課金は 0 だが、リリースは月数回のため毎時は空振りが大半だった。
+#
+# 冪等: formula が既に最新なら commit step は skip される。遅れて実行しても
+# latest.txt を見て再生成するので、常に正しい最新版へ収束する。
+#
+# ⚠️ GitHub 仕様: リポジトリが 60 日間更新なしだと schedule が自動停止する。
+#    CLI のリリースが 60 日以上空いた場合、cron は止まっている前提で 1. の手動 dispatch を使うこと
+#    (formula が bump されればリポジトリが更新され、cron は再び有効になる)。
+#
+# formula の生成・commit 自体は自リポジトリの GITHUB_TOKEN だけで完結する
+# (cross-repo の長命 PAT はどちらのリポジトリにも置かない)。
 
 on:
+  schedule:
+    # 06:17 JST (21:17 UTC) — 日本の業務開始前に前日のリリースを拾う。
+    # 毎時実行の負荷集中を避けるため :00 ではなく :17 に置く (GitHub の推奨)。
+    - cron: "17 21 * * *"
   workflow_dispatch: {}
 
 permissions:

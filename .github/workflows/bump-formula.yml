@@ -3,12 +3,15 @@ name: Bump formula from distribution bucket
 # cotomu CLI の公開配布バケット (gs://cotomu-cli-dist、HTTPS で誰でも読める) の
 # latest.txt を確認し、formula が古ければ checksums.txt から再生成して commit する。
 #
-# 起動経路は workflow_dispatch のみ (毎時 cron は全廃済み):
-#   - 通常は cotomu 本体のリリース workflow (cli-release-reusable.yml) が
-#     専用 GitHub App の短命 installation token で自動 dispatch する。
-#     dispatch 失敗はリリース側で release job ごと fail する設計のため、
-#     formula が黙って古いまま残ることはない (cron バックアップ不要)。
-#   - 手動復旧: `gh workflow run bump-formula.yml -R addinginc/homebrew-tap`
+# 起動経路は workflow_dispatch のみ (毎時 cron は 2026-08-20 に全廃):
+#   - cotomu CLI のリリース後に、手元から手動で dispatch する運用:
+#       gh workflow run bump-formula.yml -R addinginc/homebrew-tap
+#     (cotomu 本体のリリース workflow からの自動 dispatch は、cross-repo token を
+#      本体リポジトリに置かない方針のため行わない)
+#   - ⚠️ 叩き忘れると CI は何も失敗せず formula だけが古いまま残る。
+#     手順は cotomu の docs/operations/cli-release.md「4. Homebrew formula の反映」に必須ステップとして記載。
+#   - 冪等: formula が既に最新なら commit step は skip される。遅れて叩いても
+#     latest.txt を見て再生成するので正しい最新版に復旧する。
 #   - formula の生成・commit 自体は自リポジトリの GITHUB_TOKEN だけで完結する
 #     (cross-repo の長命 PAT はどちらのリポジトリにも置かない)
 

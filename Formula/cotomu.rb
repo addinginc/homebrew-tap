@@ -6,25 +6,25 @@
 class Cotomu < Formula
   desc "Cotomu Public API CLI for AI agents and ad operations"
   homepage "https://app.cotomu.jp"
-  version "0.11.0"
+  version "0.12.0"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.11.0/cotomu_v0.11.0_darwin_arm64.tar.gz"
-      sha256 "2dc02cb6e4220163766a3d0fa901c04b8e3955dbd0e6bc2de446ef2cda7273df"
+      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.12.0/cotomu_v0.12.0_darwin_arm64.tar.gz"
+      sha256 "e2d83d59c65336264e1247eea4454656c5584944377560e5838d3cee6a66a833"
     else
-      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.11.0/cotomu_v0.11.0_darwin_amd64.tar.gz"
-      sha256 "f6109380a0defc7b99e5ffffc4873bd29065a556bcaf64b50880bdafb5e0169a"
+      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.12.0/cotomu_v0.12.0_darwin_amd64.tar.gz"
+      sha256 "0f25e170f8ee1b85292cf4c05e6d1e3104a1a6b1c3e98486ed8e212d8395484b"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.11.0/cotomu_v0.11.0_linux_arm64.tar.gz"
-      sha256 "cafcad6742cc195d6a1f4cdaad60420d54ccc5563da710c84ba732e66e18a4e0"
+      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.12.0/cotomu_v0.12.0_linux_arm64.tar.gz"
+      sha256 "fdee1ef98f0b6092747d1ece10a5d95048330aac028110108911d9f39632f2a4"
     else
-      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.11.0/cotomu_v0.11.0_linux_amd64.tar.gz"
-      sha256 "82f22f2651ef278aa834b458d843d679d059702b94e9e8ef2f1e5583b46f48e0"
+      url "https://storage.googleapis.com/cotomu-cli-dist/cli/cli-v0.12.0/cotomu_v0.12.0_linux_amd64.tar.gz"
+      sha256 "0e8444976bf62d198265bae535258dbe4e02f40a5335cfc8d24964b425709425"
     end
   end
 
